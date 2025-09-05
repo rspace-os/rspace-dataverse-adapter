@@ -120,10 +120,10 @@ public class DataverseRSpaceRepository implements IRepository {
 				System.err.println(t.getMessage());
 				t.printStackTrace();
 			}
-			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip);
+			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip, ds.getProtocol());
 		}
 		else {
-		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit);
+		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
 		}
 		
 	
@@ -175,6 +175,9 @@ public class DataverseRSpaceRepository implements IRepository {
 		.languages(asList(new String []{"English"}))
 		.keywords(keywords)
 		.build();
+		if (metadata.hasOtherProperty("metadataLanguage")) {
+			facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
+		}
 		return facade;
 	}
 

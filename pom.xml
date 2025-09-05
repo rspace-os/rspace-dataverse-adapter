@@ -33,9 +33,9 @@
             <version>1.0.1</version>
         </dependency>
         <dependency>
-            <groupId>com.github.IQSS</groupId>
+            <groupId>com.researchspace</groupId>
             <artifactId>dataverse-client-java</artifactId>
-            <version>771db1e81df8ed3cedaebf321f7ed4b47ea6f728</version>
+            <version>1.0.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>xml-apis</groupId>

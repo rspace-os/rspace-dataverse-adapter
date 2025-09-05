@@ -44,7 +44,7 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 	protected String serverURL;
 	@Value("${dataverseApiKey}")
 	protected String apiKey;
-	File toDeposit = new File("src/test/resources/HTMLExportWithAttachments.zip");
+	File toDeposit = new File("src/test/resources/anyfile.doc");
 
 	@Before
 	public void setUp() throws Exception {
@@ -75,7 +75,7 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		List<ExternalId> externalIds;
 	}
 
-	@Ignore("requires passing dataverseApiKey in test.properties")
+	//@Ignore("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testDeposit() throws MalformedURLException, URISyntaxException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
@@ -91,7 +91,8 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		md.setSubjects(toList(validSubject));
 
 		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("http://www.example.com/foo")).build()));
-
+		//Requires the Hungarian option in metadata languages
+		md.addProperty("metadataLanguage", "hu");
 		RepositoryOperationResult result = adapter.submitDeposit(auth, toDeposit, md, cfg);
 		assertTrue(result.isSucceeded());
 	}
