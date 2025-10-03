@@ -4,6 +4,9 @@ import static com.researchspace.core.util.ZipUtils.createZip;
 import static java.io.File.createTempFile;
 import static java.util.Arrays.asList;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import static org.apache.commons.io.FileUtils.copyFileToDirectory;
 import static org.apache.commons.io.FileUtils.getTempDirectory;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
@@ -229,4 +232,8 @@ public class DataverseRSpaceRepository implements IRepository {
 		}
 	}
 
+	public List<Map<String, String>> getMetadataLanguage() {
+		dvAPI.configure(cfg);
+		return dvAPI.getDataverseOperations().getDataverseMetadataLanguage(cfg.getRepositoryName()).getData();
+	}
 }
