@@ -6,6 +6,7 @@ import static java.util.Arrays.asList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.apache.commons.io.FileUtils.copyFileToDirectory;
 import static org.apache.commons.io.FileUtils.getTempDirectory;
@@ -32,6 +33,7 @@ import com.researchspace.dataverse.entities.facade.DatasetAuthor;
 import com.researchspace.dataverse.entities.facade.DatasetContact;
 import com.researchspace.dataverse.entities.facade.DatasetDescription;
 import com.researchspace.dataverse.entities.facade.DatasetKeyword;
+import com.researchspace.dataverse.entities.facade.License;
 import com.researchspace.dataverse.entities.facade.DatasetFacade;
 import com.researchspace.dataverse.entities.facade.DatasetFacade.DatasetFacadeBuilder;
 import com.researchspace.repository.spi.ExternalId;
@@ -127,10 +129,12 @@ public class DataverseRSpaceRepository implements IRepository {
 				t.printStackTrace();
 			}
 			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip, ds.getProtocol());
-		} else {
-			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
 		}
-
+		else {
+		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
+		}
+		
+	
 	}
 
 	File generateDoubleZip(File toDeposit) throws IOException {
@@ -175,15 +179,25 @@ public class DataverseRSpaceRepository implements IRepository {
 
 		// since there seems no way to set a license, this is ignored here.
 		DatasetFacade facade = builder
-				.title(metadata.getTitle())
-				.subject(metadata.getSubjects().isEmpty() ? "" : metadata.getSubjects().get(0))
-				.description(DatasetDescription.builder().description(metadata.getDescription()).build())
-				.languages(asList(new String[] { "English" }))
-				.keywords(keywords)
-				.build();
-		if (metadata.hasOtherProperty("metadataLanguage")) {
-			facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
+		.title(metadata.getTitle())
+		.subject(metadata.getSubjects().isEmpty()?"":metadata.getSubjects().get(0))
+		.description(DatasetDescription.builder().description(metadata.getDescription()).build())
+		.languages(asList(new String []{"English"}))
+		.keywords(keywords)
+		.build();
+		Optional<URL> license = metadata.getLicense();
+		Optional<String> licenseName = metadata.getLicenseName();
+		if (license != null && licenseName != null && license.isPresent() && licenseName.isPresent()) {
+			try {
+				facade.setLicense(new License(licenseName.get(), license.get().toURI()));
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+    if (metadata.hasOtherProperty("metadataLanguage")) {
+			facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
+    }
 		return facade;
 	}
 

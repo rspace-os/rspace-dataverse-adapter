@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
@@ -93,6 +94,8 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("http://www.example.com/foo")).build()));
 		//Requires the Hungarian option in metadata languages
 		md.addProperty("metadataLanguage", "hu");
+		md.setLicense(Optional.of(new URL("http://creativecommons.org/publicdomain/zero/1.0")));
+		md.setLicenseName(Optional.of("CC0 1.0"));
 		RepositoryOperationResult result = adapter.submitDeposit(auth, toDeposit, md, cfg);
 		assertTrue(result.isSucceeded());
 	}
