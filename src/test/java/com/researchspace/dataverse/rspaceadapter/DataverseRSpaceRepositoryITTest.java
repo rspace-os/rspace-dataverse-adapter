@@ -76,7 +76,7 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		List<ExternalId> externalIds;
 	}
 
-	@Ignore("requires passing dataverseApiKey in test.properties")
+	//@Ignore("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testDeposit() throws MalformedURLException, URISyntaxException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
@@ -92,6 +92,8 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		md.setSubjects(toList(validSubject));
 
 		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("http://www.example.com/foo")).build()));
+		//Requires the Hungarian option in metadata languages
+		md.addProperty("metadataLanguage", "hu");
 		md.setLicense(Optional.of(new URL("http://creativecommons.org/publicdomain/zero/1.0")));
 		md.setLicenseName(Optional.of("CC0 1.0"));
 		RepositoryOperationResult result = adapter.submitDeposit(auth, toDeposit, md, cfg);
