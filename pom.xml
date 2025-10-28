@@ -35,7 +35,7 @@
         <dependency>
             <groupId>com.researchspace</groupId>
             <artifactId>dataverse-client-java</artifactId>
-            <version>1.0.0</version>
+            <version>1.2.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>xml-apis</groupId>
