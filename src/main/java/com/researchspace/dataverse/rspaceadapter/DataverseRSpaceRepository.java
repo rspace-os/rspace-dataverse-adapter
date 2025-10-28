@@ -4,6 +4,8 @@ import static com.researchspace.core.util.ZipUtils.createZip;
 import static java.io.File.createTempFile;
 import static java.util.Arrays.asList;
 import java.util.ArrayList;
+import java.util.Optional;
+
 import static org.apache.commons.io.FileUtils.copyFileToDirectory;
 import static org.apache.commons.io.FileUtils.getTempDirectory;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
@@ -29,6 +31,7 @@ import com.researchspace.dataverse.entities.facade.DatasetAuthor;
 import com.researchspace.dataverse.entities.facade.DatasetContact;
 import com.researchspace.dataverse.entities.facade.DatasetDescription;
 import com.researchspace.dataverse.entities.facade.DatasetKeyword;
+import com.researchspace.dataverse.entities.facade.License;
 import com.researchspace.dataverse.entities.facade.DatasetFacade;
 import com.researchspace.dataverse.entities.facade.DatasetFacade.DatasetFacadeBuilder;
 import com.researchspace.repository.spi.ExternalId;
@@ -120,10 +123,10 @@ public class DataverseRSpaceRepository implements IRepository {
 				System.err.println(t.getMessage());
 				t.printStackTrace();
 			}
-			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip);
+			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip, ds.getProtocol());
 		}
 		else {
-		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit);
+		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
 		}
 		
 	
@@ -175,6 +178,16 @@ public class DataverseRSpaceRepository implements IRepository {
 		.languages(asList(new String []{"English"}))
 		.keywords(keywords)
 		.build();
+		Optional<URL> license = metadata.getLicense();
+		Optional<String> licenseName = metadata.getLicenseName();
+		if (license != null && licenseName != null && license.isPresent() && licenseName.isPresent()) {
+			try {
+				facade.setLicense(new License(licenseName.get(), license.get().toURI()));
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return facade;
 	}
 
