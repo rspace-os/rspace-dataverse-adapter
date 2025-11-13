@@ -59,7 +59,7 @@ public class DataverseRSpaceRepositoryTest {
 		adaptor = new DataverseRSpaceRepository();
 		adaptor.setDvAPI(api);
 		file = new File("src/test/resources/anyfile.doc");
-		MockitoAnnotations.initMocks(this);
+		MockitoAnnotations.openMocks(this);
 	}
 
 	@AfterEach
