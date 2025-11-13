@@ -53,7 +53,7 @@ public class DataverseRepoConfigurer implements RepositoryConfigurer {
 	
 	@Override
 	public LicenseConfigInfo getLicenseConfigInfo() {
-		License license = new License(new LicenseDef( createUrl(DEFAULT_LICENSE_URL), "CC-0"), true);
+		License license = new License(new LicenseDef( createUrl(DEFAULT_LICENSE_URL), "CC0 1.0"), true);
 		return new LicenseConfigInfo(false, false, TransformerUtils.toList(license));
 	}
 

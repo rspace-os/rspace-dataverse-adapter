@@ -4,6 +4,7 @@ import static com.researchspace.core.util.ZipUtils.createZip;
 import static java.io.File.createTempFile;
 import static java.util.Arrays.asList;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,10 @@ import com.researchspace.dataverse.entities.facade.DatasetKeyword;
 import com.researchspace.dataverse.entities.facade.License;
 import com.researchspace.dataverse.entities.facade.DatasetFacade;
 import com.researchspace.dataverse.entities.facade.DatasetFacade.DatasetFacadeBuilder;
+import com.researchspace.dataverse.search.entities.DataverseItem;
+import com.researchspace.dataverse.search.entities.SearchConfig;
+import com.researchspace.dataverse.search.entities.SearchResults;
+import com.researchspace.dataverse.search.entities.SearchType;
 import com.researchspace.repository.spi.ExternalId;
 import com.researchspace.repository.spi.IDepositor;
 import com.researchspace.repository.spi.IRepository;
@@ -249,5 +254,19 @@ public class DataverseRSpaceRepository implements IRepository {
 	public List<Map<String, String>> getMetadataLanguage() {
 		dvAPI.configure(cfg);
 		return dvAPI.getDataverseOperations().getDataverseMetadataLanguage(cfg.getRepositoryName()).getData();
+	}
+
+	public SearchResults<DataverseItem> getCollections(String dataverseAlias) {
+		try {
+			dvAPI.configure(cfg);
+			SearchConfig searchConfig = SearchConfig.builder()
+					.q("*")
+					.type(EnumSet.of(SearchType.dataverse))
+					.subtree(dataverseAlias)
+					.build();
+			return dvAPI.getSearchOperations().searchDataverses(searchConfig).getData();
+		} catch (RestClientException e) {
+			return new SearchResults<>();
+		}
 	}
 }
