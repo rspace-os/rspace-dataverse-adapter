@@ -1,5 +1,9 @@
 ### Changelog
 
+## 2.1.0
+
+- support setting metadataLanguage & license metadata
+
 ## 2.0.1
 - version buildable with jitpack & downloadable from https://jitpack.io/#rspace-os/rspace-dataverse-adapter
 
