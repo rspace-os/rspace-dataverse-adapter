@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.researchspace.repository.spi.LicenseDefs;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -48,14 +49,14 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 	File toDeposit = new File("src/test/resources/anyfile.doc");
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		adapter = new DataverseRSpaceRepository();
 		adapter.setDvAPI(dvAPI);
 		adapter.setConfigurer(configurer);
 	}
 
 	@After
-	public void tearDown() throws Exception {
+	public void tearDown() {
 	}
 
 	@Ignore("requires passing dataverseApiKey in test.properties")
@@ -85,23 +86,23 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		IDepositor auth = new Depositor("a@b.com", "any", Collections.emptyList());
 		md.setAuthors(toList(auth));
 		md.setContacts(toList(auth));
-		md.setDescription("desc");
+		md.setDescription("desc (from DataverseRSpaceRepositoryITTest)");
 		md.setPublish(false);
 		md.setTitle("Title");
 
 		md.setSubjects(toList(validSubject));
 
-		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("http://www.example.com/foo")).build()));
+		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("https://www.example.com/foo")).build()));
 		//Requires the Hungarian option in metadata languages
 		md.addProperty("metadataLanguage", "hu");
-		md.setLicense(Optional.of(new URL("http://creativecommons.org/publicdomain/zero/1.0")));
-		md.setLicenseName(Optional.of("CC0 1.0"));
+		md.setLicense(Optional.of(LicenseDefs.CC_0.getUrl()));
+		md.setLicenseName(Optional.of(LicenseDefs.CC_0.getName()));
 		RepositoryOperationResult result = adapter.submitDeposit(auth, toDeposit, md, cfg);
 		assertTrue(result.isSucceeded());
 	}
 
 	@Test
-	public void testGetSubjects() throws MalformedURLException {
+	public void testGetSubjects() {
 		assertEquals(14, adapter.getConfigurer().getSubjects().size());
 	}
 

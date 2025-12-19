@@ -2,7 +2,6 @@ package com.researchspace.dataverse.rspaceadapter;
 
 import static com.researchspace.core.util.ZipUtils.createZip;
 import static java.io.File.createTempFile;
-import static java.util.Arrays.asList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,7 @@ import static org.apache.commons.io.FileUtils.copyFileToDirectory;
 import static org.apache.commons.io.FileUtils.getTempDirectory;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
 import static org.apache.commons.io.FilenameUtils.getExtension;
-import static org.apache.commons.lang.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestClientException;
 
@@ -54,12 +54,10 @@ import lombok.extern.slf4j.Slf4j;
  * hooking into the archiving workflow.
  */
 @Slf4j
+@NoArgsConstructor
 public class DataverseRSpaceRepository implements IRepository {
 
 	static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
-
-	public DataverseRSpaceRepository() {
-	}
 
 	@Autowired
 	private DataverseAPI dvAPI;
@@ -118,7 +116,7 @@ public class DataverseRSpaceRepository implements IRepository {
 	}
 
 	// demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/6RSCWM
-	void doUpload(File toDeposit, Dataset ds) throws IOException {
+	void doUpload(File toDeposit, Dataset ds) {
 		if ("zip".equals(getExtension(toDeposit.getName()))) {
 			File tempDoubleZip = null;
 			log.info("Uploading main zip as single zip archive...");
@@ -131,10 +129,8 @@ public class DataverseRSpaceRepository implements IRepository {
 			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip, ds.getProtocol());
 		}
 		else {
-		    dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
+		  dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
 		}
-		
-	
 	}
 
 	File generateDoubleZip(File toDeposit) throws IOException {
@@ -182,7 +178,7 @@ public class DataverseRSpaceRepository implements IRepository {
 		.title(metadata.getTitle())
 		.subject(metadata.getSubjects().isEmpty()?"":metadata.getSubjects().get(0))
 		.description(DatasetDescription.builder().description(metadata.getDescription()).build())
-		.languages(asList(new String []{"English"}))
+		.languages(List.of("English"))
 		.keywords(keywords)
 		.build();
 		Optional<URL> license = metadata.getLicense();
@@ -191,8 +187,7 @@ public class DataverseRSpaceRepository implements IRepository {
 			try {
 				facade.setLicense(new License(licenseName.get(), license.get().toURI()));
 			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.warn("URISyntaxException when setting license: " + license.get());
 			}
 		}
     if (metadata.hasOtherProperty("metadataLanguage")) {

@@ -54,19 +54,21 @@ public class DataverseRSpaceRepositoryTest {
 	@Mock IDepositor author;
 	public @Rule TemporaryFolder tempFolder = new TemporaryFolder();
 	File file = null;
+
 	@BeforeEach
-	public void setUp() throws Exception {
+	public void setUp() {
+		MockitoAnnotations.openMocks(this);
+
 		adaptor = new DataverseRSpaceRepository();
 		adaptor.setDvAPI(api);
 		file = new File("src/test/resources/anyfile.doc");
-		MockitoAnnotations.openMocks(this);
 	}
 
 	@AfterEach
-	public void tearDown() throws Exception {
+	public void tearDown() {
 	}
 
-	//@Test
+	@Test
 	public void testSubmitDeposit() throws MalformedURLException {
 		SubmissionMetadata metaData = createAMetaDataWithOrcidId();
 		RepositoryConfig repoCfg = createARepConfig();
@@ -74,7 +76,7 @@ public class DataverseRSpaceRepositoryTest {
 		when(dvOps.createDataset(Mockito.any(DatasetFacade.class), Mockito.anyString())).thenReturn(new Identifier());
 		when(api.getDatasetOperations()).thenReturn(dsOps);
 		Dataset ds = new Dataset();
-		ds.setPersistentUrl(new URL("http://id.com/anId"));
+		ds.setPersistentUrl(new URL("https://hdl.handle.net/21.T15999/DSDDEV/7ZYZT6"));
 		
 		when(dsOps.getDataset(Mockito.any(Identifier.class))).thenReturn(ds);
 		RepositoryOperationResult result = adaptor.submitDeposit(depositor, file, metaData, repoCfg);
@@ -82,7 +84,7 @@ public class DataverseRSpaceRepositoryTest {
 	}
 	
 	@Test
-	public void buildDataset() throws MalformedURLException{
+	public void buildDataset() {
 		//check ORcid ID is set properly
 		SubmissionMetadata metadata = createAMetaDataWithOrcidId();
 		DatasetFacade facade = adaptor.buildDatasetToSubmit(metadata);
@@ -92,7 +94,7 @@ public class DataverseRSpaceRepositoryTest {
 	}
 
 	private RepositoryConfig createARepConfig() throws MalformedURLException {
-		return new RepositoryConfig(new URL("http://any.com"),"id",null,"repoName");
+		return new RepositoryConfig(new URL("https://any.com"),"id",null,"repoName");
 	}
 
 	private SubmissionMetadata createAMetaDataWithOrcidId() {
@@ -103,8 +105,8 @@ public class DataverseRSpaceRepositoryTest {
 		when(author.getUniqueName()).thenReturn("anyone");
 		when(author.getExternalIds()).thenReturn(ids);
 		
-		md.setAuthors(Arrays.asList(new IDepositor []{author}));
-		md.setContacts(Arrays.asList(new IDepositor []{author}));
+		md.setAuthors(List.of(author));
+		md.setContacts(List.of(author));
 		md.setDescription("desc");
 		md.setPublish(false);
 		md.setSubjects(toList("subject"));
