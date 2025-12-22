@@ -1,5 +1,8 @@
 package com.researchspace.dataverse.rspaceadapter;
 
+import static com.researchspace.repository.spi.LicenseDefs.NO_LICENSE_URL;
+
+import com.researchspace.repository.spi.LicenseDefs;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DataverseRepoConfigurer implements RepositoryConfigurer {
-	
-	private static final String DEFAULT_LICENSE_URL = "https://creativecommons.org/publicdomain/zero/1.0/";
 
 	private List<Subject> subjects = new ArrayList<>();
 	
@@ -53,16 +54,17 @@ public class DataverseRepoConfigurer implements RepositoryConfigurer {
 	
 	@Override
 	public LicenseConfigInfo getLicenseConfigInfo() {
-		//TODO this license is not necessarily present
-		License license = new License(new LicenseDef( createUrl(DEFAULT_LICENSE_URL), "CC0 1.0"), true);
-		return new LicenseConfigInfo(false, false, TransformerUtils.toList(license));
+		License customLicense = new License(new LicenseDef(createUrl(NO_LICENSE_URL), "Custom Dataset Terms"), true);
+		// 'CC0 1.0' license is not necessarily allowed for given dataset, that's why default is no license
+		License cc0License = new License(LicenseDefs.CC_0, false);
+		return new LicenseConfigInfo(false, false, List.of(customLicense, cc0License));
 	}
 
-	private URL createUrl(String defaultLicenseUrl) {
+	private URL createUrl(String urlString) {
 		try {
-			return new URL(defaultLicenseUrl);
+			return new URL(urlString);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			log.warn("MalformedURLException for license url: " + urlString);
 			return null;
 		}
 	}

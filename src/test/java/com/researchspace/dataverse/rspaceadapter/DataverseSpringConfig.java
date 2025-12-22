@@ -22,7 +22,7 @@ public class DataverseSpringConfig {
 	}
 	
 	@Bean(name="configurerDataverse")
-	public RepositoryConfigurer configurer (){
+	public RepositoryConfigurer configurer() {
 		DataverseRepoConfigurer rc =  new DataverseRepoConfigurer();
 		ClassPathResource subjects = new ClassPathResource("subjects.txt");
 		rc.setResource(subjects);

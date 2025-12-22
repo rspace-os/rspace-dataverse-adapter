@@ -1,6 +1,6 @@
 package com.researchspace.dataverse.rspaceadapter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class URIUtilsTest {
 
 	private static final String EXPECTED_DATASET_URL = "https://demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/X2GWUE";
-	private static final String PERSISTENT_DOI = "http://dx.doi.org/10.5072/FK2/X2GWUE";
+	private static final String PERSISTENT_DOI = "https://dx.doi.org/10.5072/FK2/X2GWUE";
 
 	@Test
 	@DisplayName("Converts DOI to a web URL")

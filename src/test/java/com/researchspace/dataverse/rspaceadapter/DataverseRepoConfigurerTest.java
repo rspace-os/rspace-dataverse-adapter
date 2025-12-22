@@ -1,6 +1,6 @@
 package com.researchspace.dataverse.rspaceadapter;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +16,12 @@ public class DataverseRepoConfigurerTest extends AbstractJUnit4SpringContextTest
 
 	@Test
 	public void testGetSubjects() {
-		assertThat(configurer.getSubjects()).size().isEqualTo(14);
+		assertEquals(14, configurer.getSubjects().size());
 	}
 	
 	@Test
 	public void testGetLicenses(){
-		assertThat(configurer.getLicenseConfigInfo().getLicenses()).size().isEqualTo(1);
+		assertEquals(2, configurer.getLicenseConfigInfo().getLicenses().size());
 	}
 
 }

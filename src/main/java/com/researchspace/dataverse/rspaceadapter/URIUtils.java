@@ -25,7 +25,7 @@ public class URIUtils {
 	 * @throws URISyntaxException
 	 */
 	static URL persistentIDToWebUrl(URL serverUrl, URL persistentURL, String protocol)
-			throws MalformedURLException, URISyntaxException {
+			throws MalformedURLException {
 
 		String path = persistentURL.getPath();
 		Matcher m = DOI.matcher(path);
