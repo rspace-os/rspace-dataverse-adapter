@@ -4,7 +4,7 @@
 
 - add "Custom Dataset Terms" License and set it as default, as there is no guarantee other will be available
 - reorder default Subjects list (coming from subjects.txt file)
-- update pom.xml to use latest 'rspace-parent' and 'rspace-repository-spi'
+- update pom.xml to use latest 'rspace-parent' and 'rspace-repository-spi' (which bumps various java dependencies)
 - various small refactorings
 
 ## 2.1.0
