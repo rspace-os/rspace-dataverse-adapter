@@ -44,6 +44,8 @@ import com.researchspace.repository.spi.RepositoryConfigurer;
 import com.researchspace.repository.spi.RepositoryOperationResult;
 import com.researchspace.repository.spi.SubmissionMetadata;
 import com.researchspace.repository.spi.ControlledVocabularyTerm;
+import java.io.FileInputStream;
+import com.researchspace.dataverse.http.FileUploadMetadata;
 import com.researchspace.zipprocessing.ArchiveIterator;
 import com.researchspace.zipprocessing.ArchiveIteratorImpl;
 
@@ -117,19 +119,27 @@ public class DataverseRSpaceRepository implements IRepository {
 
 	// demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/6RSCWM
 	void doUpload(File toDeposit, Dataset ds) {
+		Identifier identifier = new Identifier();
+		identifier.setPersistentId(ds.getDoiId());
+		FileUploadMetadata metadata = FileUploadMetadata.builder().build();
 		if ("zip".equals(getExtension(toDeposit.getName()))) {
 			File tempDoubleZip = null;
 			log.info("Uploading main zip as single zip archive...");
 			try {
 				tempDoubleZip = generateDoubleZip(toDeposit);
+				try (FileInputStream is = new FileInputStream(tempDoubleZip)) {
+					dvAPI.getDatasetOperations().uploadNativeFile(is, tempDoubleZip.length(), metadata, identifier, tempDoubleZip.getName());
+				}
 			} catch (Throwable t) {
-				System.err.println(t.getMessage());
-				t.printStackTrace();
+				log.error(t.getMessage());
 			}
-			dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), tempDoubleZip, ds.getProtocol());
 		}
 		else {
-		  dvAPI.getDatasetOperations().uploadFile(ds.getDoiId().get(), toDeposit, ds.getProtocol());
+			try (FileInputStream is = new FileInputStream(toDeposit)) {
+				dvAPI.getDatasetOperations().uploadNativeFile(is, toDeposit.length(), metadata, identifier, toDeposit.getName());
+			} catch (IOException e) {
+				log.error(e.getMessage());
+			}
 		}
 	}
 

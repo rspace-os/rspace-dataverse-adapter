@@ -15,13 +15,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.researchspace.dataverse.api.v1.DataverseAPI;
 import com.researchspace.repository.spi.ExternalId;
@@ -32,7 +33,8 @@ import com.researchspace.repository.spi.SubmissionMetadata;
 import com.researchspace.repository.spi.ControlledVocabularyTerm;
 
 @DataverseSpringTest
-public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContextTests {
+@ExtendWith(SpringExtension.class)
+public class DataverseRSpaceRepositoryITTest {
 	final String validSubject = "Law";
 	
 	private @Autowired DataverseAPI dvAPI;
@@ -48,18 +50,18 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 	protected String apiKey;
 	File toDeposit = new File("src/test/resources/anyfile.doc");
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		adapter = new DataverseRSpaceRepository();
 		adapter.setDvAPI(dvAPI);
 		adapter.setConfigurer(configurer);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 	}
 
-	@Ignore("requires passing dataverseApiKey in test.properties")
+	@Disabled("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testConnection() throws MalformedURLException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
@@ -77,7 +79,7 @@ public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContext
 		List<ExternalId> externalIds;
 	}
 
-	//@Ignore("requires passing dataverseApiKey in test.properties")
+	@Disabled("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testDeposit() throws MalformedURLException, URISyntaxException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
