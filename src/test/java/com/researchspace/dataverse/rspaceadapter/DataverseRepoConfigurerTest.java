@@ -1,5 +1,6 @@
 package com.researchspace.dataverse.rspaceadapter;
 
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,7 +43,7 @@ public class DataverseRepoConfigurerTest extends AbstractJUnit4SpringContextTest
 			json = objectMapper.writeValueAsString(dataverseDataset);
 			System.out.println(json);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
