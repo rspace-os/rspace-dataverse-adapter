@@ -1,5 +1,11 @@
 ### Changelog
 
+## 2.1.4
+
+- upgrading to `rspace-repository-spi` version `1.1.2` 
+- add Raid reference into `OtherReferences` field
+- passing the DOI link though the new `RepositoryOperationResult` constructor
+  
 ## 2.1.1 
 
 - add "Custom Dataset Terms" License and set it as default, as there is no guarantee other will be available

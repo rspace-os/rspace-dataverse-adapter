@@ -58,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DataverseRSpaceRepository implements IRepository {
 
 	static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
+	public static final String RAID_METADATA_PROPERTY = "raid";
 
 	@Autowired
 	private DataverseAPI dvAPI;
@@ -89,15 +90,14 @@ public class DataverseRSpaceRepository implements IRepository {
 				repoCfg.getRepositoryName());
 		log.info("Uploading file {}, size {}", toDeposit.getAbsolutePath(), toDeposit.length());
 		dvAPI.configure(cfg);
-		DatasetFacade facade = buildDatasetToSubmit(metadata);
-		facade.setDepositor(depositor.getUniqueName());
+		DatasetFacade facade = buildDatasetToSubmit(metadata, depositor.getUniqueName());
 
 		try {
 			Identifier createdDs = dvAPI.getDataverseOperations().createDataset(facade, cfg.getRepositoryName());
 			Dataset ds = dvAPI.getDatasetOperations().getDataset(createdDs);
 			doUpload(toDeposit, ds);
 			return new RepositoryOperationResult(true, "Deposit succeeded.",
-					createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()));
+					createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()), ds.getPersistentUrl());
 		} catch (RestClientException e) {
 			log.error("Couldn't perform action {}", e.getMessage());
 			return new RepositoryOperationResult(false, "Deposit failed: " + e.getMessage(), null);
@@ -154,7 +154,7 @@ public class DataverseRSpaceRepository implements IRepository {
 		return tempDoubleZip;
 	}
 
-	DatasetFacade buildDatasetToSubmit(SubmissionMetadata metadata) {
+	DatasetFacade buildDatasetToSubmit(SubmissionMetadata metadata, String depositorName) {
 		DatasetFacadeBuilder builder = DatasetFacade.builder();
 		for (IDepositor author : metadata.getAuthors()) {
 			builder.author(buildAuthor(author));
@@ -193,6 +193,10 @@ public class DataverseRSpaceRepository implements IRepository {
     if (metadata.hasOtherProperty("metadataLanguage")) {
 			facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
     }
+		facade.setDepositor(depositorName);
+		if(metadata.hasOtherProperty(RAID_METADATA_PROPERTY)) {
+			facade.setOtherReferences(List.of(metadata.getOtherProperties().get(RAID_METADATA_PROPERTY)));
+		}
 		return facade;
 	}
 
