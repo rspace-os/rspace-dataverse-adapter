@@ -1,6 +1,7 @@
 package com.researchspace.dataverse.rspaceadapter;
 
 import static com.researchspace.core.util.TransformerUtils.toList;
+import static com.researchspace.dataverse.rspaceadapter.DataverseRSpaceRepository.RAID_METADATA_PROPERTY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -13,16 +14,16 @@ import java.net.URL;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import com.researchspace.dataverse.api.v1.DataverseAPI;
 import com.researchspace.repository.spi.ExternalId;
@@ -33,8 +34,7 @@ import com.researchspace.repository.spi.SubmissionMetadata;
 import com.researchspace.repository.spi.ControlledVocabularyTerm;
 
 @DataverseSpringTest
-@ExtendWith(SpringExtension.class)
-public class DataverseRSpaceRepositoryITTest {
+public class DataverseRSpaceRepositoryITTest extends AbstractJUnit4SpringContextTests {
 	final String validSubject = "Law";
 	
 	private @Autowired DataverseAPI dvAPI;
@@ -50,18 +50,18 @@ public class DataverseRSpaceRepositoryITTest {
 	protected String apiKey;
 	File toDeposit = new File("src/test/resources/anyfile.doc");
 
-	@BeforeEach
+	@Before
 	public void setUp() {
 		adapter = new DataverseRSpaceRepository();
 		adapter.setDvAPI(dvAPI);
 		adapter.setConfigurer(configurer);
 	}
 
-	@AfterEach
+	@After
 	public void tearDown() {
 	}
 
-	@Disabled("requires passing dataverseApiKey in test.properties")
+	@Ignore("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testConnection() throws MalformedURLException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
@@ -79,7 +79,7 @@ public class DataverseRSpaceRepositoryITTest {
 		List<ExternalId> externalIds;
 	}
 
-	@Disabled("requires passing dataverseApiKey in test.properties")
+	@Ignore("requires passing dataverseApiKey in test.properties")
 	@Test
 	public void testDeposit() throws MalformedURLException, URISyntaxException {
 		RepositoryConfig cfg = createRepoConnectionCfg();
@@ -91,12 +91,13 @@ public class DataverseRSpaceRepositoryITTest {
 		md.setDescription("desc (from DataverseRSpaceRepositoryITTest)");
 		md.setPublish(false);
 		md.setTitle("Title");
+		md.setOtherProperties(Map.of(RAID_METADATA_PROPERTY, "https://raid.org/10.12345/NICO26"));
 
 		md.setSubjects(toList(validSubject));
 
 		md.setTerms(toList(ControlledVocabularyTerm.builder().value("foo").vocabulary("bar").uri(new URI("https://www.example.com/foo")).build()));
-		//Requires the Hungarian option in metadata languages
-		md.addProperty("metadataLanguage", "hu");
+		//if Hungarian option is supported in dataverse metadata languages, uncomment line below
+		//md.addProperty("metadataLanguage", "hu");
 		md.setLicense(Optional.of(LicenseDefs.CC_0.getUrl()));
 		md.setLicenseName(Optional.of(LicenseDefs.CC_0.getName()));
 		RepositoryOperationResult result = adapter.submitDeposit(auth, toDeposit, md, cfg);
