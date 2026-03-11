@@ -58,7 +58,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @NoArgsConstructor
-@Component
 public class DataverseRSpaceRepository implements IRepository {
 
 	static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
