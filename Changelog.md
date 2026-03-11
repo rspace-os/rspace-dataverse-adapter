@@ -1,5 +1,9 @@
 ### Changelog
 
+## 3.0.0
+
+- use "native" upload rather than SWORD protocol, which used outdated libraries and may be deprecated soon
+
 ## 2.1.4
 
 - upgrading to `rspace-repository-spi` version `1.1.2` 

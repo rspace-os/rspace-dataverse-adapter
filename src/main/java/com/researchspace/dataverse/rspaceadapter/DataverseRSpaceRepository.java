@@ -14,6 +14,7 @@ import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.UnsupportedOperationException;
 import java.net.MalformedURLException;
@@ -21,12 +22,14 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestClientException;
 
 import com.researchspace.dataverse.api.v1.DataverseAPI;
 import com.researchspace.dataverse.api.v1.DataverseConfig;
 import com.researchspace.dataverse.entities.Dataset;
+import com.researchspace.dataverse.http.FileUploadMetadata;
 import com.researchspace.dataverse.entities.DataverseGet;
 import com.researchspace.dataverse.entities.Identifier;
 import com.researchspace.dataverse.entities.facade.DatasetAuthor;
@@ -44,8 +47,6 @@ import com.researchspace.repository.spi.RepositoryConfigurer;
 import com.researchspace.repository.spi.RepositoryOperationResult;
 import com.researchspace.repository.spi.SubmissionMetadata;
 import com.researchspace.repository.spi.ControlledVocabularyTerm;
-import java.io.FileInputStream;
-import com.researchspace.dataverse.http.FileUploadMetadata;
 import com.researchspace.zipprocessing.ArchiveIterator;
 import com.researchspace.zipprocessing.ArchiveIteratorImpl;
 
@@ -57,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @NoArgsConstructor
+@Component
 public class DataverseRSpaceRepository implements IRepository {
 
 	static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
@@ -118,28 +120,31 @@ public class DataverseRSpaceRepository implements IRepository {
 	}
 
 	// demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/6RSCWM
-	void doUpload(File toDeposit, Dataset ds) {
-		Identifier identifier = new Identifier();
-		identifier.setPersistentId(ds.getDoiId());
-		FileUploadMetadata metadata = FileUploadMetadata.builder().build();
+	void doUpload(File toDeposit, Dataset ds) throws IOException {
+		FileUploadMetadata metadata = FileUploadMetadata.builder()
+			.build();
+
+		String fullPersistentId = ds.getProtocol() + ":" + ds.getDoiId().get();
+		Identifier dsIdentifier = new Identifier(ds.getId(), fullPersistentId);
+
+		File upload;
 		if ("zip".equals(getExtension(toDeposit.getName()))) {
-			File tempDoubleZip = null;
-			log.info("Uploading main zip as single zip archive...");
-			try {
-				tempDoubleZip = generateDoubleZip(toDeposit);
-				try (FileInputStream is = new FileInputStream(tempDoubleZip)) {
-					dvAPI.getDatasetOperations().uploadNativeFile(is, tempDoubleZip.length(), metadata, identifier, tempDoubleZip.getName());
-				}
-			} catch (Throwable t) {
-				log.error(t.getMessage());
-			}
+			upload = generateDoubleZip(toDeposit);
+		} else {
+			upload = toDeposit;
 		}
-		else {
-			try (FileInputStream is = new FileInputStream(toDeposit)) {
-				dvAPI.getDatasetOperations().uploadNativeFile(is, toDeposit.length(), metadata, identifier, toDeposit.getName());
-			} catch (IOException e) {
-				log.error(e.getMessage());
-			}
+
+		try (FileInputStream fis = new FileInputStream(upload)) {
+			dvAPI.getDatasetOperations().uploadNativeFile(
+							fis,
+							upload.length(),
+							metadata,
+							dsIdentifier,
+							upload.getName()
+			);
+		} catch (Throwable t) {
+				System.err.println(t.getMessage());
+				t.printStackTrace();
 		}
 	}
 
