@@ -2,7 +2,9 @@ package com.researchspace.dataverse.rspaceadapter;
 
 import static com.researchspace.core.util.ZipUtils.createZip;
 import static java.io.File.createTempFile;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,214 +55,227 @@ import com.researchspace.zipprocessing.ArchiveIteratorImpl;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Connector to Dataverse API and implementing the IRepository interface for
- * hooking into the archiving workflow.
+ * Connector to Dataverse API and implementing the IRepository interface for hooking into the
+ * archiving workflow.
  */
 @Slf4j
 @NoArgsConstructor
 public class DataverseRSpaceRepository implements IRepository {
 
-	static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
-	public static final String RAID_METADATA_PROPERTY = "raid";
+  static final String ARCHIVE_RESOURCE_FOLDER = "/resources/";
+  public static final String RAID_METADATA_PROPERTY = "raid";
+  public static final String IGSN_INVENTORY_LINKED_ITEMS = "igsnInventoryLinkedItems";
 
-	@Autowired
-	private DataverseAPI dvAPI;
+  @Autowired
+  private DataverseAPI dvAPI;
 
-	private RepositoryConfigurer configurer;
+  private RepositoryConfigurer configurer;
 
-	public void setConfigurer(RepositoryConfigurer configurer) {
-		this.configurer = configurer;
-	}
+  public void setConfigurer(RepositoryConfigurer configurer) {
+    this.configurer = configurer;
+  }
 
-	@Override
-	public RepositoryConfigurer getConfigurer() {
-		return configurer;
-	}
+  @Override
+  public RepositoryConfigurer getConfigurer() {
+    return configurer;
+  }
 
-	public void setDvAPI(DataverseAPI dvAPI) {
-		this.dvAPI = dvAPI;
-	}
+  public void setDvAPI(DataverseAPI dvAPI) {
+    this.dvAPI = dvAPI;
+  }
 
-	private DataverseConfig cfg;
+  private DataverseConfig cfg;
 
-	@Override
-	public RepositoryOperationResult submitDeposit(IDepositor depositor, File toDeposit,
-			SubmissionMetadata metadata, RepositoryConfig repoCfg) {
-		if (metadata.isPublish()) {
-			throw new UnsupportedOperationException("Publishing deposit is not supported.");
-		}
-		DataverseConfig cfg = new DataverseConfig(repoCfg.getServerURL(), repoCfg.getIdentifier(),
-				repoCfg.getRepositoryName());
-		log.info("Uploading file {}, size {}", toDeposit.getAbsolutePath(), toDeposit.length());
-		dvAPI.configure(cfg);
-		DatasetFacade facade = buildDatasetToSubmit(metadata, depositor.getUniqueName());
-
-		try {
-			Identifier createdDs = dvAPI.getDataverseOperations().createDataset(facade, cfg.getRepositoryName());
-			Dataset ds = dvAPI.getDatasetOperations().getDataset(createdDs);
-			doUpload(toDeposit, ds);
-			return new RepositoryOperationResult(true, "Deposit succeeded.",
-					createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()), ds.getPersistentUrl());
-		} catch (RestClientException e) {
-			log.error("Couldn't perform action {}", e.getMessage());
-			return new RepositoryOperationResult(false, "Deposit failed: " + e.getMessage(), null);
-		} catch (IOException e) {
-			log.error("Couldn't perform file upload {}", e.getMessage());
-			return new RepositoryOperationResult(false, "Deposit failed due to IO error" + e.getMessage(), null);
-		} catch (URISyntaxException e) {
-			log.warn("Couldn't generate URI for deposit file upload {}", e.getMessage());
-			return new RepositoryOperationResult(true, "Deposit failed due to IO error" + e.getMessage(), null);
-		}
-	}
-
-	private URL createWebUrl(URL persistentUrl, RepositoryConfig config, String protocol)
-			throws MalformedURLException, URISyntaxException {
-		return URIUtils.persistentIDToWebUrl(config.getServerURL(), persistentUrl, protocol);
-	}
-
-	// demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/6RSCWM
-	void doUpload(File toDeposit, Dataset ds) throws IOException {
-		FileUploadMetadata metadata = FileUploadMetadata.builder()
-			.build();
-
-		String fullPersistentId = ds.getProtocol() + ":" + ds.getDoiId().get();
-		Identifier dsIdentifier = new Identifier(ds.getId(), fullPersistentId);
-
-		File upload;
-		if ("zip".equals(getExtension(toDeposit.getName()))) {
-			upload = generateDoubleZip(toDeposit);
-		} else {
-			upload = toDeposit;
-		}
-
-		try (FileInputStream fis = new FileInputStream(upload)) {
-			dvAPI.getDatasetOperations().uploadNativeFile(
-							fis,
-							upload.length(),
-							metadata,
-							dsIdentifier,
-							upload.getName()
-			);
-		} catch (Throwable t) {
-				System.err.println(t.getMessage());
-				t.printStackTrace();
-		}
-	}
-
-	File generateDoubleZip(File toDeposit) throws IOException {
-		ArchiveIterator it = new ArchiveIteratorImpl();
-		File tempFolder = new File(getTempDirectory(), randomAlphabetic(10));
-		tempFolder.mkdir();
-		it.processZip(toDeposit,
-				file -> {
-					try {
-						copyFileToDirectory(file, tempFolder);
-					} catch (IOException e) {
-						e.printStackTrace();
-						throw new IllegalStateException(
-								"IO exception while pre-processing export for upload to Dataverse.");
-					}
-				},
-				entry -> !entry.getName().contains(ARCHIVE_RESOURCE_FOLDER));
-		copyFileToDirectory(toDeposit, tempFolder);
-		File tempDoubleZip = createTempFile(getBaseName(toDeposit.getName()), ".zip");
-		createZip(tempDoubleZip, tempFolder.listFiles());
-		return tempDoubleZip;
-	}
-
-	DatasetFacade buildDatasetToSubmit(SubmissionMetadata metadata, String depositorName) {
-		DatasetFacadeBuilder builder = DatasetFacade.builder();
-		for (IDepositor author : metadata.getAuthors()) {
-			builder.author(buildAuthor(author));
-		}
-		for (IDepositor contact : metadata.getContacts()) {
-			builder.contact(buildContact(contact));
-		}
-
-		var keywords = new ArrayList<DatasetKeyword>();
-		for (ControlledVocabularyTerm term : metadata.getTerms()) {
-			keywords.add(DatasetKeyword
-					.builder()
-					.value(term.getValue())
-					.vocabulary(term.getVocabulary())
-					.vocabularyURI(term.getUri())
-					.build());
-		}
-
-		// since there seems no way to set a license, this is ignored here.
-		DatasetFacade facade = builder
-		.title(metadata.getTitle())
-		.subject(metadata.getSubjects().isEmpty()?"":metadata.getSubjects().get(0))
-		.description(DatasetDescription.builder().description(metadata.getDescription()).build())
-		.languages(List.of("English"))
-		.keywords(keywords)
-		.build();
-		Optional<URL> license = metadata.getLicense();
-		Optional<String> licenseName = metadata.getLicenseName();
-		if (license != null && licenseName != null && license.isPresent() && licenseName.isPresent()) {
-			try {
-				facade.setLicense(new License(licenseName.get(), license.get().toURI()));
-			} catch (URISyntaxException e) {
-				log.warn("URISyntaxException when setting license: " + license.get());
-			}
-		}
-    if (metadata.hasOtherProperty("metadataLanguage")) {
-			facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
+  @Override
+  public RepositoryOperationResult submitDeposit(IDepositor depositor, File toDeposit,
+      SubmissionMetadata metadata, RepositoryConfig repoCfg) {
+    if (metadata.isPublish()) {
+      throw new UnsupportedOperationException("Publishing deposit is not supported.");
     }
-		facade.setDepositor(depositorName);
-		if(metadata.hasOtherProperty(RAID_METADATA_PROPERTY)) {
-			facade.setOtherReferences(List.of(metadata.getOtherProperties().get(RAID_METADATA_PROPERTY)));
-		}
-		return facade;
-	}
+    DataverseConfig cfg = new DataverseConfig(repoCfg.getServerURL(), repoCfg.getIdentifier(),
+        repoCfg.getRepositoryName());
+    log.info("Uploading file {}, size {}", toDeposit.getAbsolutePath(), toDeposit.length());
+    dvAPI.configure(cfg);
+    DatasetFacade facade = buildDatasetToSubmit(metadata, depositor.getUniqueName());
 
-	private DatasetAuthor buildAuthor(IDepositor author) {
-		ExternalId extId = getExtId(author);
-		return DatasetAuthor.builder()
-				.authorName(author.getUniqueName())
-				.authorIdentifier((extId != null) ? extId.getIdentifier() : null)
-				.authorIdentifierScheme((extId != null) ? extId.getScheme().name() : null)
-				.build();
-	}
+    try {
+      Identifier createdDs = dvAPI.getDataverseOperations()
+          .createDataset(facade, cfg.getRepositoryName());
+      Dataset ds = dvAPI.getDatasetOperations().getDataset(createdDs);
+      doUpload(toDeposit, ds);
+      return new RepositoryOperationResult(true, "Deposit succeeded.",
+          createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()), ds.getPersistentUrl());
+    } catch (RestClientException e) {
+      log.error("Couldn't perform action {}", e.getMessage());
+      return new RepositoryOperationResult(false, "Deposit failed: " + e.getMessage(), null);
+    } catch (IOException e) {
+      log.error("Couldn't perform file upload {}", e.getMessage());
+      return new RepositoryOperationResult(false, "Deposit failed due to IO error" + e.getMessage(),
+          null);
+    } catch (URISyntaxException e) {
+      log.warn("Couldn't generate URI for deposit file upload {}", e.getMessage());
+      return new RepositoryOperationResult(true, "Deposit failed due to IO error" + e.getMessage(),
+          null);
+    }
+  }
 
-	private ExternalId getExtId(IDepositor author) {
-		if (!author.getExternalIds().isEmpty()) {
-			return author.getExternalIds().get(0);
-		}
-		return null;
-	}
+  private URL createWebUrl(URL persistentUrl, RepositoryConfig config, String protocol)
+      throws MalformedURLException, URISyntaxException {
+    return URIUtils.persistentIDToWebUrl(config.getServerURL(), persistentUrl, protocol);
+  }
 
-	private DatasetContact buildContact(IDepositor contact) {
-		return DatasetContact.builder()
-				.datasetContactEmail(contact.getEmail())
-				.datasetContactName(contact.getUniqueName()).build();
-	}
+  // demo.dataverse.org/dataset.xhtml?persistentId=doi:10.5072/FK2/6RSCWM
+  void doUpload(File toDeposit, Dataset ds) throws IOException {
+    FileUploadMetadata metadata = FileUploadMetadata.builder()
+        .build();
 
-	@Override
-	public void configure(RepositoryConfig repoCfg) {
-		this.cfg = new DataverseConfig(repoCfg.getServerURL(), repoCfg.getIdentifier(),
-				repoCfg.getRepositoryName());
-	}
+    String fullPersistentId = ds.getProtocol() + ":" + ds.getDoiId().get();
+    Identifier dsIdentifier = new Identifier(ds.getId(), fullPersistentId);
 
-	@Override
-	public RepositoryOperationResult testConnection() {
-		try {
-			dvAPI.configure(cfg);
-			DataverseGet dv = dvAPI.getDataverseOperations().getDataverseById(cfg.getRepositoryName());
-			if (dv != null) {
-				return new RepositoryOperationResult(true, "Test connection OK!", null);
-			} else {
-				return new RepositoryOperationResult(false, "Test connection failed - please check settings.", null);
-			}
+    File upload;
+    if ("zip".equals(getExtension(toDeposit.getName()))) {
+      upload = generateDoubleZip(toDeposit);
+    } else {
+      upload = toDeposit;
+    }
 
-		} catch (RestClientException e) {
-			log.error("Couldn't perform test action {}" + e.getMessage());
-			return new RepositoryOperationResult(false, "Test connection failed - " + e.getMessage(), null);
-		}
-	}
+    try (FileInputStream fis = new FileInputStream(upload)) {
+      dvAPI.getDatasetOperations().uploadNativeFile(
+          fis,
+          upload.length(),
+          metadata,
+          dsIdentifier,
+          upload.getName()
+      );
+    } catch (Throwable t) {
+      System.err.println(t.getMessage());
+      t.printStackTrace();
+    }
+  }
 
-	public List<Map<String, String>> getMetadataLanguage() {
-		dvAPI.configure(cfg);
-		return dvAPI.getDataverseOperations().getDataverseMetadataLanguage(cfg.getRepositoryName()).getData();
-	}
+  File generateDoubleZip(File toDeposit) throws IOException {
+    ArchiveIterator it = new ArchiveIteratorImpl();
+    File tempFolder = new File(getTempDirectory(), randomAlphabetic(10));
+    tempFolder.mkdir();
+    it.processZip(toDeposit,
+        file -> {
+          try {
+            copyFileToDirectory(file, tempFolder);
+          } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(
+                "IO exception while pre-processing export for upload to Dataverse.");
+          }
+        },
+        entry -> !entry.getName().contains(ARCHIVE_RESOURCE_FOLDER));
+    copyFileToDirectory(toDeposit, tempFolder);
+    File tempDoubleZip = createTempFile(getBaseName(toDeposit.getName()), ".zip");
+    createZip(tempDoubleZip, tempFolder.listFiles());
+    return tempDoubleZip;
+  }
+
+  DatasetFacade buildDatasetToSubmit(SubmissionMetadata metadata, String depositorName) {
+    DatasetFacadeBuilder builder = DatasetFacade.builder();
+    for (IDepositor author : metadata.getAuthors()) {
+      builder.author(buildAuthor(author));
+    }
+    for (IDepositor contact : metadata.getContacts()) {
+      builder.contact(buildContact(contact));
+    }
+
+    var keywords = new ArrayList<DatasetKeyword>();
+    for (ControlledVocabularyTerm term : metadata.getTerms()) {
+      keywords.add(DatasetKeyword
+          .builder()
+          .value(term.getValue())
+          .vocabulary(term.getVocabulary())
+          .vocabularyURI(term.getUri())
+          .build());
+    }
+
+    // since there seems no way to set a license, this is ignored here.
+    DatasetFacade facade = builder
+        .title(metadata.getTitle())
+        .subject(metadata.getSubjects().isEmpty() ? "" : metadata.getSubjects().get(0))
+        .description(DatasetDescription.builder().description(metadata.getDescription()).build())
+        .languages(List.of("English"))
+        .keywords(keywords)
+        .build();
+    Optional<URL> license = metadata.getLicense();
+    Optional<String> licenseName = metadata.getLicenseName();
+    if (license != null && licenseName != null && license.isPresent() && licenseName.isPresent()) {
+      try {
+        facade.setLicense(new License(licenseName.get(), license.get().toURI()));
+      } catch (URISyntaxException e) {
+        log.warn("URISyntaxException when setting license: " + license.get());
+      }
+    }
+    if (metadata.hasOtherProperty("metadataLanguage")) {
+      facade.setMetadataLanguage(metadata.getOtherProperties().get("metadataLanguage"));
+    }
+    facade.setDepositor(depositorName);
+    if (metadata.hasOtherProperty(RAID_METADATA_PROPERTY)) {
+      facade.setOtherReferences(List.of(metadata.getOtherProperties().get(RAID_METADATA_PROPERTY)));
+    }
+    if (metadata.hasOtherProperty(IGSN_INVENTORY_LINKED_ITEMS)) {
+      facade.setRelatedMaterial(
+          Arrays.asList(metadata.getOtherProperties().get(IGSN_INVENTORY_LINKED_ITEMS).split(","))
+      );
+    }
+
+    return facade;
+  }
+
+  private DatasetAuthor buildAuthor(IDepositor author) {
+    ExternalId extId = getExtId(author);
+    return DatasetAuthor.builder()
+        .authorName(author.getUniqueName())
+        .authorIdentifier((extId != null) ? extId.getIdentifier() : null)
+        .authorIdentifierScheme((extId != null) ? extId.getScheme().name() : null)
+        .build();
+  }
+
+  private ExternalId getExtId(IDepositor author) {
+    if (!author.getExternalIds().isEmpty()) {
+      return author.getExternalIds().get(0);
+    }
+    return null;
+  }
+
+  private DatasetContact buildContact(IDepositor contact) {
+    return DatasetContact.builder()
+        .datasetContactEmail(contact.getEmail())
+        .datasetContactName(contact.getUniqueName()).build();
+  }
+
+  @Override
+  public void configure(RepositoryConfig repoCfg) {
+    this.cfg = new DataverseConfig(repoCfg.getServerURL(), repoCfg.getIdentifier(),
+        repoCfg.getRepositoryName());
+  }
+
+  @Override
+  public RepositoryOperationResult testConnection() {
+    try {
+      dvAPI.configure(cfg);
+      DataverseGet dv = dvAPI.getDataverseOperations().getDataverseById(cfg.getRepositoryName());
+      if (dv != null) {
+        return new RepositoryOperationResult(true, "Test connection OK!", null);
+      } else {
+        return new RepositoryOperationResult(false,
+            "Test connection failed - please check settings.", null);
+      }
+
+    } catch (RestClientException e) {
+      log.error("Couldn't perform test action {}" + e.getMessage());
+      return new RepositoryOperationResult(false, "Test connection failed - " + e.getMessage(),
+          null);
+    }
+  }
+
+  public List<Map<String, String>> getMetadataLanguage() {
+    dvAPI.configure(cfg);
+    return dvAPI.getDataverseOperations().getDataverseMetadataLanguage(cfg.getRepositoryName())
+        .getData();
+  }
 }
