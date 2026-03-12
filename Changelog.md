@@ -1,5 +1,9 @@
 ### Changelog
 
+## 3.0.2
+
+- Build `relatedMaterial` metadata field fetching from `otherProperties`
+
 ## 3.0.1
 
 - use "native" upload rather than SWORD protocol, which used outdated libraries and may be deprecated soon

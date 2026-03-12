@@ -1,6 +1,7 @@
 package com.researchspace.dataverse.rspaceadapter;
 
 import static com.researchspace.core.util.TransformerUtils.toList;
+import static com.researchspace.dataverse.rspaceadapter.DataverseRSpaceRepository.IGSN_INVENTORY_LINKED_ITEMS;
 import static com.researchspace.dataverse.rspaceadapter.DataverseRSpaceRepository.RAID_METADATA_PROPERTY;
 import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.filefilter.FileFilterUtils.directoryFileFilter;
@@ -10,24 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import java.util.Map;
-import org.junit.Rule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 import com.researchspace.core.util.ZipUtils;
 import com.researchspace.dataverse.api.v1.DatasetOperations;
@@ -43,13 +26,31 @@ import com.researchspace.repository.spi.IdentifierScheme;
 import com.researchspace.repository.spi.RepositoryConfig;
 import com.researchspace.repository.spi.RepositoryOperationResult;
 import com.researchspace.repository.spi.SubmissionMetadata;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Rule;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 // needed to support temp folder
 @EnableRuleMigrationSupport
 public class DataverseRSpaceRepositoryTest {
 
   private static final String ORCIDID = "orcidid1";
-  private static final String RAID_REFERENCE = "https://raid.org/10.12345/NICO26";
+  protected static final String RAID_REFERENCE = "https://raid.org/10.12345/NICO26";
+  protected static final String IGSN_ITEM_1 = "https://doi.org/10.82316/kfwc-xd82";
+  protected static final String IGSN_ITEM_2 = "https://doi.org/10.82316/3fz7-mr43";
   DataverseRSpaceRepository adaptor;
   @Mock
   DataverseAPI api;
@@ -102,6 +103,8 @@ public class DataverseRSpaceRepositoryTest {
         .extracting(DatasetAuthor::getAuthorIdentifier, DatasetAuthor::getAuthorIdentifierScheme)
         .containsExactly(tuple(ORCIDID, IdentifierScheme.ORCID.name()));
     assertEquals(RAID_REFERENCE, facade.getOtherReferences().get(0));
+    assertEquals(IGSN_ITEM_1, facade.getRelatedMaterial().get(0));
+    assertEquals(IGSN_ITEM_2, facade.getRelatedMaterial().get(1));
     assertEquals("depositor", facade.getDepositor());
   }
 
@@ -123,7 +126,11 @@ public class DataverseRSpaceRepositoryTest {
     md.setPublish(false);
     md.setSubjects(toList("subject"));
     md.setTitle("title");
-    md.setOtherProperties(Map.of(RAID_METADATA_PROPERTY, RAID_REFERENCE));
+
+    Map<String, String> otherPropertiesMap = new HashMap<>();
+    otherPropertiesMap.put(RAID_METADATA_PROPERTY, RAID_REFERENCE);
+    otherPropertiesMap.put(IGSN_INVENTORY_LINKED_ITEMS, IGSN_ITEM_1 + "," + IGSN_ITEM_2);
+    md.setOtherProperties(otherPropertiesMap);
     return md;
   }
 

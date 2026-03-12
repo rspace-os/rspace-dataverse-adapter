@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rspace-dataverse-adapter</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
 
     <parent>
         <groupId>com.github.rspace-os</groupId>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.github.iqss</groupId>
             <artifactId>dataverse-client-java</artifactId>
-            <version>v2.0.0</version>
+            <version>v2.0.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.projectlombok</groupId>
