@@ -99,8 +99,7 @@ public class DataverseRSpaceRepository implements IRepository {
 			Identifier createdDs = dvAPI.getDataverseOperations().createDataset(facade, cfg.getRepositoryName());
 			Dataset ds = dvAPI.getDatasetOperations().getDataset(createdDs);
 			doUpload(toDeposit, ds);
-			return new RepositoryOperationResult(true, "Deposit succeeded.",
-					createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()), ds.getPersistentUrl());
+			return new RepositoryOperationResult(true, "Deposit succeeded.", createWebUrl(ds.getPersistentUrl(), repoCfg, ds.getProtocol()));
 		} catch (RestClientException e) {
 			log.error("Couldn't perform action {}", e.getMessage());
 			return new RepositoryOperationResult(false, "Deposit failed: " + e.getMessage(), null);
