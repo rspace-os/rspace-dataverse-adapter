@@ -3,7 +3,7 @@
 ## 3.0.0, 3.0.1
 
 - use "native" upload rather than SWORD protocol, which used outdated libraries and may be deprecated soon
-- switch to `dataverse-client` version 2.0.0, which no longer depends on sword-client lib
+- switch to `dataverse-client` version v2.0.0, which no longer depends on sword-client lib
 
 ## 2.1.4
 
