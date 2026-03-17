@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rspace-dataverse-adapter</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 
     <parent>
         <groupId>com.github.rspace-os</groupId>
@@ -26,6 +26,7 @@
             </plugin>
         </plugins>
     </build>
+
     <dependencies>
         <dependency>
             <groupId>com.github.rspace-os</groupId>
@@ -33,17 +34,13 @@
             <version>1.1.2</version>
         </dependency>
         <dependency>
-            <groupId>com.github.rspace-os</groupId>
+            <groupId>com.github.iqss</groupId>
             <artifactId>dataverse-client-java</artifactId>
-            <version>2.0.0</version>
+            <version>v2.0.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>xerces</groupId>
-                    <artifactId>xmlParserAPIs</artifactId>
+                    <groupId>org.projectlombok</groupId>
+                    <artifactId>lombok</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.apache.commons</groupId>
@@ -131,7 +128,6 @@
             <artifactId>jackson-datatype-jdk8</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
     </dependencies>
 
 </project>
