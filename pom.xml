@@ -26,6 +26,7 @@
             </plugin>
         </plugins>
     </build>
+
     <dependencies>
         <dependency>
             <groupId>com.github.rspace-os</groupId>
@@ -127,7 +128,6 @@
             <artifactId>jackson-datatype-jdk8</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
     </dependencies>
 
 </project>
