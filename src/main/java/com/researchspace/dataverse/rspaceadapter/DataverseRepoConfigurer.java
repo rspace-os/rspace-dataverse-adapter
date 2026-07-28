@@ -11,12 +11,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
 
-import com.researchspace.core.util.TransformerUtils;
 import com.researchspace.repository.spi.License;
 import com.researchspace.repository.spi.LicenseConfigInfo;
 import com.researchspace.repository.spi.LicenseDef;
